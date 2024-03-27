@@ -136,7 +136,9 @@ var QueryBuilder = function($el, options) {
     // INIT
     this.$el.addClass('query-builder');
 
-    this.filters = this.checkFilters(this.filters);
+    if (this.filters?.length) {
+      this.filters = this.checkFilters(this.filters);
+    }
     this.operators = this.checkOperators(this.operators);
     this.bindEvents();
     this.initPlugins();

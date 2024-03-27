@@ -323,6 +323,32 @@ QueryBuilder.prototype.getFilterById = function(id, doThrow) {
         return null;
     }
 
+    if (!this.filters?.length) {
+      const inputFilter = {
+        id,
+        field: id,
+        label: {
+          en: id,
+          ru: id,
+        },
+        icon: 'bi-person-fill',
+        value_separator: ',',
+        type: 'string',
+        default_value: '',
+        size: 30,
+        validation: {
+          allow_empty_value: true
+        },
+        unique: true,
+        description: function (rule) {
+          if (['in', 'not in'].includes(rule.operator.type)) {
+            return 'Значения через запятую'
+          }
+        }
+      }
+      return inputFilter
+    }
+
     for (var i = 0, l = this.filters.length; i < l; i++) {
         if (this.filters[i].id == id) {
             return this.filters[i];

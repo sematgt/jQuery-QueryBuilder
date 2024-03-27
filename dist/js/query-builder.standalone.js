@@ -289,7 +289,9 @@ var QueryBuilder = function($el, options) {
     // INIT
     this.$el.addClass('query-builder');
 
-    this.filters = this.checkFilters(this.filters);
+    if (this.filters?.length) {
+      this.filters = this.checkFilters(this.filters);
+    }
     this.operators = this.checkOperators(this.operators);
     this.bindEvents();
     this.initPlugins();
@@ -534,6 +536,7 @@ QueryBuilder.DEFAULTS = {
         group: null,
         rule: null,
         filterSelect: null,
+        filterInput: null,
         operatorSelect: null,
         ruleValueSelect: null
     },
@@ -1309,17 +1312,24 @@ QueryBuilder.prototype.deleteRule = function(rule) {
  */
 QueryBuilder.prototype.createRuleFilters = function(rule) {
     /**
-     * Modifies the list a filters available for a rule
+     * Modifies the list of filters available for a rule
      * @event changer:getRuleFilters
      * @memberof QueryBuilder
      * @param {QueryBuilder.Filter[]} filters
      * @param {Rule} rule
      * @returns {QueryBuilder.Filter[]}
-     */
-    var filters = this.change('getRuleFilters', this.filters, rule);
-    var $filterSelect = $($.parseHTML(this.getRuleFilterSelect(rule, filters)));
-
-    rule.$el.find(QueryBuilder.selectors.filter_container).html($filterSelect);
+    */
+   var filters = this.change('getRuleFilters', this.filters, rule); // TODO what is it for?
+    if (this.filters?.length) {
+      var $filterSelect = $($.parseHTML(this.getRuleFilterSelect(rule, filters)));
+  
+      rule.$el.find(QueryBuilder.selectors.filter_container).html($filterSelect);
+    }
+    else {
+      var $filterInput = $($.parseHTML(this.getRuleFilterInput(rule)));
+  
+      rule.$el.find(QueryBuilder.selectors.filter_container).html($filterInput);
+    }
 
     /**
      * After creating the dropdown for filters
@@ -2471,6 +2481,32 @@ QueryBuilder.prototype.getFilterById = function(id, doThrow) {
         return null;
     }
 
+    if (!this.filters?.length) {
+      const inputFilter = {
+        id,
+        field: id,
+        label: {
+          en: id,
+          ru: id,
+        },
+        icon: 'bi-person-fill',
+        value_separator: ',',
+        type: 'string',
+        default_value: '',
+        size: 30,
+        validation: {
+          allow_empty_value: true
+        },
+        unique: true,
+        description: function (rule) {
+          if (['in', 'not in'].includes(rule.operator.type)) {
+            return 'Значения через запятую'
+          }
+        }
+      }
+      return inputFilter
+    }
+
     for (var i = 0, l = this.filters.length; i < l; i++) {
         if (this.filters[i].id == id) {
             return this.filters[i];
@@ -2866,21 +2902,28 @@ QueryBuilder.templates.rule = ({ rule_id, icons, settings, translate, builder })
 QueryBuilder.templates.filterSelect = ({ rule, filters, icons, settings, translate, builder }) => {
   let optgroup = null;
   return `
-<select class="form-select" name="${rule.id}_filter">
-  ${settings.display_empty_filter ? `
-    <option value="-1">${settings.select_placeholder}</option>
-  ` : ''}
-  ${filters.map(filter => `
-    ${optgroup !== filter.optgroup ? `
-      ${optgroup !== null ? `</optgroup>` : ''}
-      ${(optgroup = filter.optgroup) !== null ? `
-        <optgroup label="${translate(settings.optgroups[optgroup])}">
-      ` : ''}
-    ` : ''}
-    <option value="${filter.id}" ${filter.icon ? `data-icon="${filter.icon}"` : ''}>${translate(filter.label)}</option>
-  `).join('')}
-  ${optgroup !== null ? '</optgroup>' : ''}
-</select>`;
+    <select class="form-select" name="${ rule.id }_filter">
+      ${ settings.display_empty_filter ? `
+        <option value="-1">${ settings.select_placeholder }</option>
+      ` : '' }
+      ${ filters.map(filter => `
+        ${ optgroup !== filter.optgroup ? `
+          ${ optgroup !== null ? `</optgroup>` : '' }
+          ${ (optgroup = filter.optgroup) !== null ? `
+            <optgroup label="${ translate(settings.optgroups[ optgroup ]) }">
+          ` : '' }
+        ` : '' }
+        <option value="${ filter.id }" ${ filter.icon ? `data-icon="${ filter.icon }"` : '' }>${ translate(filter.label) }</option>
+      `).join('') }
+      ${ optgroup !== null ? '</optgroup>' : '' }
+    </select>`;
+};
+
+QueryBuilder.templates.filterInput = ({ rule }) => {
+    return `
+    <input class="form-control" type="text" name="${ rule.id }_filter">
+    </input>
+  `
 };
 
 QueryBuilder.templates.operatorSelect = ({ rule, operators, icons, settings, translate, builder }) => {
@@ -2982,7 +3025,7 @@ QueryBuilder.prototype.getRuleTemplate = function (rule_id) {
 };
 
 /**
- * Returns rule's filter HTML
+ * Returns rule's filter select HTML
  * @param {Rule} rule
  * @param {object[]} filters
  * @returns {string}
@@ -3009,6 +3052,29 @@ QueryBuilder.prototype.getRuleFilterSelect = function (rule, filters) {
    * @returns {string}
    */
   return this.change('getRuleFilterSelect', h, rule, filters);
+};
+
+/**
+ * Returns rule's filter input HTML
+ * @param {Rule} rule
+ * @returns {string}
+ * @fires QueryBuilder.changer:getRuleFilterTemplate
+ * @private
+ */
+QueryBuilder.prototype.getRuleFilterInput = function (rule) {
+  var h = this.templates.filterInput({
+    rule: rule,
+  }).trim();
+
+  /**
+   * Modifies the raw HTML of the rule's filter input
+   * @event changer:getRuleFilterInput
+   * @memberof QueryBuilder
+   * @param {string} html
+   * @param {Rule} rule
+   * @returns {string}
+   */
+  return this.change('getRuleFilterInput', h, rule);
 };
 
 /**

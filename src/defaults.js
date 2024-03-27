@@ -156,6 +156,7 @@ QueryBuilder.DEFAULTS = {
         group: null,
         rule: null,
         filterSelect: null,
+        filterInput: null,
         operatorSelect: null,
         ruleValueSelect: null
     },

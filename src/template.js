@@ -56,21 +56,28 @@ QueryBuilder.templates.rule = ({ rule_id, icons, settings, translate, builder })
 QueryBuilder.templates.filterSelect = ({ rule, filters, icons, settings, translate, builder }) => {
   let optgroup = null;
   return `
-<select class="form-select" name="${rule.id}_filter">
-  ${settings.display_empty_filter ? `
-    <option value="-1">${settings.select_placeholder}</option>
-  ` : ''}
-  ${filters.map(filter => `
-    ${optgroup !== filter.optgroup ? `
-      ${optgroup !== null ? `</optgroup>` : ''}
-      ${(optgroup = filter.optgroup) !== null ? `
-        <optgroup label="${translate(settings.optgroups[optgroup])}">
-      ` : ''}
-    ` : ''}
-    <option value="${filter.id}" ${filter.icon ? `data-icon="${filter.icon}"` : ''}>${translate(filter.label)}</option>
-  `).join('')}
-  ${optgroup !== null ? '</optgroup>' : ''}
-</select>`;
+    <select class="form-select" name="${ rule.id }_filter">
+      ${ settings.display_empty_filter ? `
+        <option value="-1">${ settings.select_placeholder }</option>
+      ` : '' }
+      ${ filters.map(filter => `
+        ${ optgroup !== filter.optgroup ? `
+          ${ optgroup !== null ? `</optgroup>` : '' }
+          ${ (optgroup = filter.optgroup) !== null ? `
+            <optgroup label="${ translate(settings.optgroups[ optgroup ]) }">
+          ` : '' }
+        ` : '' }
+        <option value="${ filter.id }" ${ filter.icon ? `data-icon="${ filter.icon }"` : '' }>${ translate(filter.label) }</option>
+      `).join('') }
+      ${ optgroup !== null ? '</optgroup>' : '' }
+    </select>`;
+};
+
+QueryBuilder.templates.filterInput = ({ rule }) => {
+    return `
+    <input class="form-control" type="text" name="${ rule.id }_filter">
+    </input>
+  `
 };
 
 QueryBuilder.templates.operatorSelect = ({ rule, operators, icons, settings, translate, builder }) => {
@@ -172,7 +179,7 @@ QueryBuilder.prototype.getRuleTemplate = function (rule_id) {
 };
 
 /**
- * Returns rule's filter HTML
+ * Returns rule's filter select HTML
  * @param {Rule} rule
  * @param {object[]} filters
  * @returns {string}
@@ -199,6 +206,29 @@ QueryBuilder.prototype.getRuleFilterSelect = function (rule, filters) {
    * @returns {string}
    */
   return this.change('getRuleFilterSelect', h, rule, filters);
+};
+
+/**
+ * Returns rule's filter input HTML
+ * @param {Rule} rule
+ * @returns {string}
+ * @fires QueryBuilder.changer:getRuleFilterTemplate
+ * @private
+ */
+QueryBuilder.prototype.getRuleFilterInput = function (rule) {
+  var h = this.templates.filterInput({
+    rule: rule,
+  }).trim();
+
+  /**
+   * Modifies the raw HTML of the rule's filter input
+   * @event changer:getRuleFilterInput
+   * @memberof QueryBuilder
+   * @param {string} html
+   * @param {Rule} rule
+   * @returns {string}
+   */
+  return this.change('getRuleFilterInput', h, rule);
 };
 
 /**

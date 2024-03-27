@@ -617,17 +617,24 @@ QueryBuilder.prototype.deleteRule = function(rule) {
  */
 QueryBuilder.prototype.createRuleFilters = function(rule) {
     /**
-     * Modifies the list a filters available for a rule
+     * Modifies the list of filters available for a rule
      * @event changer:getRuleFilters
      * @memberof QueryBuilder
      * @param {QueryBuilder.Filter[]} filters
      * @param {Rule} rule
      * @returns {QueryBuilder.Filter[]}
-     */
-    var filters = this.change('getRuleFilters', this.filters, rule);
-    var $filterSelect = $($.parseHTML(this.getRuleFilterSelect(rule, filters)));
-
-    rule.$el.find(QueryBuilder.selectors.filter_container).html($filterSelect);
+    */
+   var filters = this.change('getRuleFilters', this.filters, rule); // TODO what is it for?
+    if (this.filters?.length) {
+      var $filterSelect = $($.parseHTML(this.getRuleFilterSelect(rule, filters)));
+  
+      rule.$el.find(QueryBuilder.selectors.filter_container).html($filterSelect);
+    }
+    else {
+      var $filterInput = $($.parseHTML(this.getRuleFilterInput(rule)));
+  
+      rule.$el.find(QueryBuilder.selectors.filter_container).html($filterInput);
+    }
 
     /**
      * After creating the dropdown for filters
